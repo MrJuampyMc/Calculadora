@@ -1,244 +1,247 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import math
+import re
 
 class Calculadora:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Calculadora")
-        self.root.geometry("400x600")
-        self.root.resizable(False, False)
-        self.root.configure(bg='#2c3e50')
+    def __init__(self, ventana):
+        self.ventana = ventana
+        self.ventana.title("Mi Calculadora")
+        self.ventana.geometry("400x600")
+        self.ventana.resizable(False, False)
+        self.ventana.configure(bg='#2c3e50')
         
-        self.expression = ""
-        self.result_var = tk.StringVar()
-        self.result_var.set("0")
+        self.texto_pantalla = tk.StringVar()
+        self.texto_pantalla.set("0")
         
-        self.setup_styles()
-        
-        self.create_widgets()
-        
-        self.setup_keyboard_shortcuts()
+        self.definir_colores()
+        self.crear_interfaz()
+        self.configurar_teclado()
     
-    def setup_styles(self):
-        """Configurar estilos de los botones"""
-        self.style = ttk.Style()
-        self.style.configure('TButton', font=('Arial', 12, 'bold'))
-        
-        self.colors = {
-            'bg': '#2c3e50',
-            'display_bg': '#34495e',
-            'display_fg': '#ecf0f1',
-            'button_bg': '#3498db',
-            'button_fg': 'white',
-            'operator_bg': '#e67e22',
-            'operator_fg': 'white',
-            'clear_bg': '#e74c3c',
-            'clear_fg': 'white',
-            'equal_bg': '#27ae60',
-            'equal_fg': 'white',
-            'special_bg': '#95a5a6',
-            'special_fg': 'white'
+    def definir_colores(self):
+        """Aqui guardo los colores que voy a usar"""
+        self.mis_colores = {
+            'fondo': '#2c3e50',
+            'pantalla_fondo': '#34495e',
+            'pantalla_texto': '#ecf0f1',
+            'boton_normal': '#3498db',
+            'boton_normal_texto': 'white',
+            'boton_operador': '#e67e22',
+            'boton_operador_texto': 'white',
+            'boton_borrar': '#e74c3c',
+            'boton_borrar_texto': 'white',
+            'boton_igual': '#27ae60',
+            'boton_igual_texto': 'white',
+            'boton_especial': '#95a5a6',
+            'boton_especial_texto': 'white'
         }
     
-    def create_widgets(self):
-        """Crear todos los widgets de la interfaz"""
+    def crear_interfaz(self):
+        """Creo todos los botones y la pantalla"""
         
-        main_frame = tk.Frame(self.root, bg=self.colors['bg'])
-        main_frame.pack(expand=True, fill='both', padx=10, pady=10)
+        marco_principal = tk.Frame(self.ventana, bg=self.mis_colores['fondo'])
+        marco_principal.pack(expand=True, fill='both', padx=10, pady=10)
         
-        display_frame = tk.Frame(main_frame, bg=self.colors['display_bg'], height=120)
-        display_frame.pack(fill='x', pady=(0, 20))
-        display_frame.pack_propagate(False)
+        marco_pantalla = tk.Frame(marco_principal, bg=self.mis_colores['pantalla_fondo'], height=120)
+        marco_pantalla.pack(fill='x', pady=(0, 20))
+        marco_pantalla.pack_propagate(False)
         
-        self.display_label = tk.Label(
-            display_frame,
-            textvariable=self.result_var,
+        self.etiqueta_pantalla = tk.Label(
+            marco_pantalla,
+            textvariable=self.texto_pantalla,
             font=('Arial', 28, 'bold'),
-            bg=self.colors['display_bg'],
-            fg=self.colors['display_fg'],
+            bg=self.mis_colores['pantalla_fondo'],
+            fg=self.mis_colores['pantalla_texto'],
             anchor='e',
             padx=15,
             pady=20
         )
-        self.display_label.pack(fill='both', expand=True)
+        self.etiqueta_pantalla.pack(fill='both', expand=True)
         
-        buttons_frame = tk.Frame(main_frame, bg=self.colors['bg'])
-        buttons_frame.pack(expand=True, fill='both')
+        marco_botones = tk.Frame(marco_principal, bg=self.mis_colores['fondo'])
+        marco_botones.pack(expand=True, fill='both')
         
-        buttons_config = [
-            ('C', 0, 0, 'clear', 1), ('⌫', 0, 1, 'clear', 1), ('%', 0, 2, 'special', 1), ('/', 0, 3, 'operator', 1),
-            ('7', 1, 0, 'number', 1), ('8', 1, 1, 'number', 1), ('9', 1, 2, 'number', 1), ('*', 1, 3, 'operator', 1),
-            ('4', 2, 0, 'number', 1), ('5', 2, 1, 'number', 1), ('6', 2, 2, 'number', 1), ('-', 2, 3, 'operator', 1),
-            ('1', 3, 0, 'number', 1), ('2', 3, 1, 'number', 1), ('3', 3, 2, 'number', 1), ('+', 3, 3, 'operator', 1),
-            ('0', 4, 0, 'number', 2), ('.', 4, 2, 'special', 1), ('=', 4, 3, 'equal', 1)
+        mis_botones = [
+            ('C', 0, 0, 'borrar'), ('⌫', 0, 1, 'borrar'), ('%', 0, 2, 'especial'), ('/', 0, 3, 'operador'),
+            ('7', 1, 0, 'numero'), ('8', 1, 1, 'numero'), ('9', 1, 2, 'numero'), ('*', 1, 3, 'operador'),
+            ('4', 2, 0, 'numero'), ('5', 2, 1, 'numero'), ('6', 2, 2, 'numero'), ('-', 2, 3, 'operador'),
+            ('1', 3, 0, 'numero'), ('2', 3, 1, 'numero'), ('3', 3, 2, 'numero'), ('+', 3, 3, 'operador'),
+            ('0', 4, 0, 'numero', 2), ('.', 4, 2, 'decimal'), ('=', 4, 3, 'igual')
         ]
         
-        for config in buttons_config:
-            text = config[0]
-            row = config[1]
-            col = config[2]
-            btn_type = config[3]
-            colspan = config[4] if len(config) > 4 else 1
+        for boton_info in mis_botones:
+            texto = boton_info[0]
+            fila = boton_info[1]
+            columna = boton_info[2]
+            tipo = boton_info[3]
+            ancho = boton_info[4] if len(boton_info) > 4 else 1
             
-            btn = self.create_button(buttons_frame, text, btn_type, colspan)
-            btn.grid(row=row, column=col, columnspan=colspan, padx=2, pady=2, sticky='nsew')
+            mi_boton = self.hacer_boton(marco_botones, texto, tipo, ancho)
+            mi_boton.grid(row=fila, column=columna, columnspan=ancho, padx=2, pady=2, sticky='nsew')
         
         for i in range(5):
-            buttons_frame.grid_rowconfigure(i, weight=1)
+            marco_botones.grid_rowconfigure(i, weight=1)
         for i in range(4):
-            buttons_frame.grid_columnconfigure(i, weight=1)
+            marco_botones.grid_columnconfigure(i, weight=1)
     
-    def create_button(self, parent, text, btn_type, colspan=1):
-        """Crear un botón con estilo específico"""
-        if btn_type == 'clear':
-            bg_color = self.colors['clear_bg']
-            fg_color = self.colors['clear_fg']
-        elif btn_type == 'operator':
-            bg_color = self.colors['operator_bg']
-            fg_color = self.colors['operator_fg']
-        elif btn_type == 'equal':
-            bg_color = self.colors['equal_bg']
-            fg_color = self.colors['equal_fg']
-        elif btn_type == 'special':
-            bg_color = self.colors['special_bg']
-            fg_color = self.colors['special_fg']
-        else: 
-            bg_color = self.colors['button_bg']
-            fg_color = self.colors['button_fg']
+    def hacer_boton(self, padre, texto, tipo, ancho=1):
+        """Funcion para crear un boton con su color y funcion"""
         
-        btn = tk.Button(
-            parent,
-            text=text,
+        if tipo == 'borrar':
+            color_fondo = self.mis_colores['boton_borrar']
+            color_texto = self.mis_colores['boton_borrar_texto']
+        elif tipo == 'operador':
+            color_fondo = self.mis_colores['boton_operador']
+            color_texto = self.mis_colores['boton_operador_texto']
+        elif tipo == 'igual':
+            color_fondo = self.mis_colores['boton_igual']
+            color_texto = self.mis_colores['boton_igual_texto']
+        elif tipo == 'especial':
+            color_fondo = self.mis_colores['boton_especial']
+            color_texto = self.mis_colores['boton_especial_texto']
+        else:
+            color_fondo = self.mis_colores['boton_normal']
+            color_texto = self.mis_colores['boton_normal_texto']
+        
+        boton = tk.Button(
+            padre,
+            text=texto,
             font=('Arial', 14, 'bold'),
-            bg=bg_color,
-            fg=fg_color,
-            activebackground=self.darken_color(bg_color),
-            activeforeground=fg_color,
+            bg=color_fondo,
+            fg=color_texto,
+            activebackground=self.oscurecer_color(color_fondo),
+            activeforeground=color_texto,
             relief=tk.RAISED,
             bd=2,
             cursor='hand2'
         )
         
-        if btn_type == 'number':
-            btn.config(command=lambda t=text: self.add_to_expression(t))
-        elif btn_type == 'operator':
-            btn.config(command=lambda t=text: self.add_operator(t))
-        elif text == 'C':
-            btn.config(command=self.clear)
-        elif text == '⌫':
-            btn.config(command=self.backspace)
-        elif text == '=':
-            btn.config(command=self.calculate)
-        elif text == '%':
-            btn.config(command=self.percentage)
+        if tipo == 'numero':
+            boton.config(command=lambda t=texto: self.agregar_numero(t))
+        elif tipo == 'operador':
+            boton.config(command=lambda t=texto: self.agregar_operador(t))
+        elif tipo == 'decimal':
+            boton.config(command=self.agregar_punto)
+        elif texto == 'C':
+            boton.config(command=self.limpiar_todo)
+        elif texto == '⌫':
+            boton.config(command=self.borrar_ultimo)
+        elif texto == '=':
+            boton.config(command=self.calcular_resultado)
+        elif texto == '%':
+            boton.config(command=self.porcentaje)
         
-        return btn
+        return boton
     
-    def darken_color(self, color):
-        """Oscurecer un color para efecto hover"""
-        colors_map = {
+    def oscurecer_color(self, color):
+        """Para cuando pasas el mouse por encima del boton"""
+        colores_oscuros = {
             '#3498db': '#2980b9',
             '#e67e22': '#d35400',
             '#e74c3c': '#c0392b',
             '#27ae60': '#229954',
             '#95a5a6': '#7f8c8d'
         }
-        return colors_map.get(color, '#2c3e50')
+        return colores_oscuros.get(color, '#2c3e50')
     
-    def add_to_expression(self, value):
-        """Agregar número al display"""
-        current = self.result_var.get()
-        if current == "0" or current == "Error":
-            self.result_var.set(value)
+    def agregar_numero(self, numero):
+        """Agrega un numero a la pantalla"""
+        valor_actual = self.texto_pantalla.get()
+        if valor_actual == "0" or valor_actual == "Error":
+            self.texto_pantalla.set(numero)
         else:
-            self.result_var.set(current + value)
+            self.texto_pantalla.set(valor_actual + numero)
     
-    def add_operator(self, operator):
-        """Agregar operador matemático"""
-        current = self.result_var.get()
-        if current and current != "Error":
-            last_char = current[-1] if current else ""
-            if last_char in ['+', '-', '*', '/', '%']:
-                self.result_var.set(current[:-1] + operator)
+    def agregar_punto(self):
+        """Agrega un punto decimal si se puede"""
+        valor_actual = self.texto_pantalla.get()
+        
+        if valor_actual == "Error":
+            self.texto_pantalla.set("0.")
+            return
+        
+        if valor_actual == "0":
+            self.texto_pantalla.set("0.")
+            return
+        
+        partes = re.split(r'[+\-*/%]', valor_actual)
+        ultimo_numero = partes[-1] if partes else ""
+        
+        if '.' in ultimo_numero:
+            return
+        
+        self.texto_pantalla.set(valor_actual + ".")
+    
+    def agregar_operador(self, operador):
+        """Agrega un operador matematico (+, -, *, /)"""
+        valor_actual = self.texto_pantalla.get()
+        if valor_actual and valor_actual != "Error":
+            ultimo_caracter = valor_actual[-1] if valor_actual else ""
+            if ultimo_caracter in ['+', '-', '*', '/', '%']:
+                self.texto_pantalla.set(valor_actual[:-1] + operador)
             else:
-                self.result_var.set(current + operator)
+                self.texto_pantalla.set(valor_actual + operador)
     
-    def calculate(self):
-        """Calcular la expresión matemática"""
+    def calcular_resultado(self):
+        """Hace la operacion matematica"""
         try:
-            expression = self.result_var.get()
-            if expression and expression != "Error":
-                expression = expression.replace('×', '*').replace('÷', '/')
+            cuenta = self.texto_pantalla.get()
+            if cuenta and cuenta != "Error":
+                resultado = eval(cuenta)
                 
-                result = eval(expression)
-                
-                if isinstance(result, float):
-                    if result.is_integer():
-                        result = int(result)
+                if isinstance(resultado, float):
+                    if resultado.is_integer():
+                        resultado = int(resultado)
                     else:
-                        result = round(result, 10)
+                        resultado = round(resultado, 10)
                 
-                self.result_var.set(str(result))
-        except Exception:
-            self.result_var.set("Error")
-            messagebox.showerror("Error", "Expresión inválida")
+                self.texto_pantalla.set(str(resultado))
+        except Exception as error:
+            self.texto_pantalla.set("Error")
+            messagebox.showerror("Error", "No se puede hacer esa operacion")
     
-    def clear(self):
-        """Limpiar el display"""
-        self.result_var.set("0")
+    def limpiar_todo(self):
+        """Borra todo lo que hay en pantalla"""
+        self.texto_pantalla.set("0")
     
-    def backspace(self):
-        """Borrar último carácter"""
-        current = self.result_var.get()
-        if current and current != "Error" and current != "0":
-            if len(current) == 1:
-                self.result_var.set("0")
+    def borrar_ultimo(self):
+        """Borra el ultimo numero o caracter"""
+        valor_actual = self.texto_pantalla.get()
+        if valor_actual and valor_actual != "Error" and valor_actual != "0":
+            if len(valor_actual) == 1:
+                self.texto_pantalla.set("0")
             else:
-                self.result_var.set(current[:-1])
+                self.texto_pantalla.set(valor_actual[:-1])
     
-    def percentage(self):
-        """Calcular porcentaje"""
+    def porcentaje(self):
+        """Calcula el porcentaje"""
         try:
-            current = self.result_var.get()
-            if current and current != "Error":
-                value = float(eval(current))
-                result = value / 100
-                self.result_var.set(str(result))
+            valor_actual = self.texto_pantalla.get()
+            if valor_actual and valor_actual != "Error":
+                numero = eval(valor_actual)
+                resultado = numero / 100
+                if isinstance(resultado, float) and resultado.is_integer():
+                    resultado = int(resultado)
+                self.texto_pantalla.set(str(resultado))
         except:
-            self.result_var.set("Error")
+            self.texto_pantalla.set("Error")
     
-    def setup_keyboard_shortcuts(self):
-        """Configurar atajos de teclado"""
-        self.root.bind('<Key>', self.key_press)
+    def configurar_teclado(self):
+        """Para que funcionen las teclas del teclado"""
+        for tecla in '0123456789':
+            self.ventana.bind(tecla, lambda e, num=tecla: self.agregar_numero(num))
         
-        for key in '0123456789':
-            self.root.bind(str(key), lambda e, k=key: self.add_to_expression(k))
+        for operador in ['+', '-', '*', '/']:
+            self.ventana.bind(operador, lambda e, op=operador: self.agregar_operador(op))
         
-        for op in ['+', '-', '*', '/']:
-            self.root.bind(op, lambda e, o=op: self.add_operator(o))
+        self.ventana.bind('.', lambda e: self.agregar_punto())
         
-        self.root.bind('<Return>', lambda e: self.calculate())
-        self.root.bind('<BackSpace>', lambda e: self.backspace())
-        self.root.bind('<Escape>', lambda e: self.clear())
-        self.root.bind('<Delete>', lambda e: self.clear())
-        self.root.bind('.', lambda e: self.add_to_expression('.'))
-        self.root.bind('%', lambda e: self.percentage())
-    
-    def key_press(self, event):
-        """Manejar eventos de teclado"""
-        key = event.char
-        if key == '=' or key == '\r':
-            self.calculate()
-        elif key == 'c' or key == 'C':
-            self.clear()
-        elif key == '\b':
-            self.backspace()
-
-def main():
-    root = tk.Tk()
-    app = Calculadora(root)
-    root.mainloop()
+        self.ventana.bind('<Return>', lambda e: self.calcular_resultado())
+        self.ventana.bind('<BackSpace>', lambda e: self.borrar_ultimo())
+        self.ventana.bind('<Escape>', lambda e: self.limpiar_todo())
+        self.ventana.bind('<Delete>', lambda e: self.limpiar_todo())
+        self.ventana.bind('%', lambda e: self.porcentaje())
 
 if __name__ == "__main__":
-    main()
+    ventana_principal = tk.Tk()
+    mi_calculadora = Calculadora(ventana_principal)
+    ventana_principal.mainloop()
